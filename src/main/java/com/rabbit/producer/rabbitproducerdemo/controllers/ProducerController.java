@@ -53,7 +53,7 @@ public class ProducerController {
 	}
 
 	private void send(String message, String routingKey) {
-		this.template.convertAndSend(directExchange.getName(), routingKey, message + " 1");
+		this.template.convertAndSend(directExchange.getName(), routingKey, message);
 		System.out.println(directExchange.getName() + " Sent '" + message + "', routingKey: " + routingKey + ", date : " + LocalDateTime.now());
 	}
 }
