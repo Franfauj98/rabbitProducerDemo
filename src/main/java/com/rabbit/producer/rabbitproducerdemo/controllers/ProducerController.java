@@ -25,6 +25,8 @@ public class ProducerController {
 
 	private Queue queue = new Queue("rabbitExample.first");
 	private Queue queue2 = new Queue("rabbitExample.second");
+	// Temps d'attente avant de supprimer un message de la file d'attente ou de considérer l'envoi de message en erreur
+	private int rabbitTimeout = 60000;
 
 	@Bean
 	public Binding bindingFirst() {
@@ -42,18 +44,24 @@ public class ProducerController {
 
 	@GetMapping(value = "/queue1/{toSend}")
 	public ResponseEntity sendMessageQueue1(@PathVariable String toSend) {
-		send(toSend, "first");
+		sendAsynchronous(toSend, "first");
 		return ResponseEntity.ok(toSend);
 	}
 
 	@GetMapping(value = "/queue2/{toSend}")
 	public ResponseEntity sendMessageQueue2(@PathVariable String toSend) {
-		send(toSend, "second");
+		sendSynchronous(toSend, "second");
 		return ResponseEntity.ok(toSend);
 	}
 
-	private void send(String message, String routingKey) {
+	private void sendSynchronous(String message, String routingKey) {
+		this.template.setReplyTimeout(rabbitTimeout);
+		Integer response = (Integer) this.template.convertSendAndReceive(directExchange.getName(), routingKey, message);
+		System.out.println(directExchange.getName() + " Sent synchronously '" + message + "', routingKey: " + routingKey + ", date : " + LocalDateTime.now() + ", response : " + response);
+	}
+
+	private void sendAsynchronous(String message, String routingKey) {
 		this.template.convertAndSend(directExchange.getName(), routingKey, message);
-		System.out.println(directExchange.getName() + " Sent '" + message + "', routingKey: " + routingKey + ", date : " + LocalDateTime.now());
+		System.out.println(directExchange.getName() + " Sent asynchronously '" + message + "', routingKey: " + routingKey + ", date : " + LocalDateTime.now());
 	}
 }
