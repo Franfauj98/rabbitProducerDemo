@@ -1,12 +1,8 @@
 package com.rabbit.producer.rabbitproducerdemo.controllers;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,40 +17,27 @@ public class ProducerController {
 	@Autowired
 	private RabbitTemplate template;
 
-	private DirectExchange directExchange = new DirectExchange("rabbit.example.direct");
+	@Autowired
+	private DirectExchange directExchange;
 
-	private Queue queue = new Queue("rabbitExample.first");
-	private Queue queue2 = new Queue("rabbitExample.second");
-	// Temps d'attente avant de supprimer un message de la file d'attente ou de considérer l'envoi de message en erreur
-	private int rabbitTimeout = 60000;
+	private final String synchronousQueue = "synchronous";
+	private final String asynchronousQueue = "asynchronous";
 
-	@Bean
-	public Binding bindingFirst() {
-		return BindingBuilder.bind(queue)
-				.to(directExchange)
-				.with("first");
-	}
-
-	@Bean
-	public Binding BindingSecond() {
-		return BindingBuilder.bind(queue2)
-				.to(directExchange)
-				.with("second");
-	}
-
-	@GetMapping(value = "/queue1/{toSend}")
+	@GetMapping(value = "/asynchronous/{toSend}")
 	public ResponseEntity sendMessageQueue1(@PathVariable String toSend) {
-		sendAsynchronous(toSend, "first");
+		sendAsynchronous(toSend, synchronousQueue);
 		return ResponseEntity.ok(toSend);
 	}
 
-	@GetMapping(value = "/queue2/{toSend}")
+	@GetMapping(value = "/synchronous/{toSend}")
 	public ResponseEntity sendMessageQueue2(@PathVariable String toSend) {
-		sendSynchronous(toSend, "second");
+		sendSynchronous(toSend, asynchronousQueue);
 		return ResponseEntity.ok(toSend);
 	}
 
 	private void sendSynchronous(String message, String routingKey) {
+		// Temps d'attente avant de supprimer un message de la file d'attente ou de considérer l'envoi de message en erreur
+		int rabbitTimeout = 60000;
 		this.template.setReplyTimeout(rabbitTimeout);
 		Integer response = (Integer) this.template.convertSendAndReceive(directExchange.getName(), routingKey, message);
 		System.out.println(directExchange.getName() + " Sent synchronously '" + message + "', routingKey: " + routingKey + ", date : " + LocalDateTime.now() + ", response : " + response);
