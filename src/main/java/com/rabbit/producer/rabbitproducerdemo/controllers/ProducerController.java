@@ -2,7 +2,6 @@ package com.rabbit.producer.rabbitproducerdemo.controllers;
 
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,6 +28,14 @@ public class ProducerController {
 		return ResponseEntity.ok(toSend);
 	}
 
+	private void sendAsynchronous(String message, String routingKey) {
+		System.out.println("Start sending asynchronously ");
+		this.template.convertAndSend(directExchange.getName(), routingKey, message);
+		System.out.println(directExchange.getName() + " Sent asynchronously '" + message + "', routingKey: " + routingKey
+				+ ", date : " + LocalDateTime.now());
+		System.out.println("Stop sending synchronously ");
+	}
+
 	@GetMapping(value = "/synchronous/{toSend}")
 	public ResponseEntity<String> sendMessageSynchronous(@PathVariable String toSend) {
 		String synchronousQueue = "synchronous";
@@ -37,19 +44,13 @@ public class ProducerController {
 	}
 
 	private void sendSynchronous(String message, String routingKey) {
-		// Temps d'attente avant de supprimer un message de la file d'attente ou de considérer l'envoi de message en erreur
 		System.out.println("Start sending synchronously ");
-		int rabbitTimeout = 60000;
+		int rabbitTimeout = 60000; // Je permet d'attendre avant que le message soit considéré en erreur
 		this.template.setReplyTimeout(rabbitTimeout);
 		Integer response = (Integer) this.template.convertSendAndReceive(directExchange.getName(), routingKey, message);
-		System.out.println(directExchange.getName() + " Sent synchronously '" + message + "', routingKey: " + routingKey + ", date : " + LocalDateTime.now() + ", response : " + response);
+		System.out.println(directExchange.getName() + " Sent synchronously '" + message + "', routingKey: " + routingKey
+				+ ", date : " + LocalDateTime.now() + ", response : " + response);
 		System.out.println("Stop sending synchronously ");
 	}
 
-	private void sendAsynchronous(String message, String routingKey) {
-		System.out.println("Start sending asynchronously ");
-		this.template.convertAndSend(directExchange.getName(), routingKey, message);
-		System.out.println(directExchange.getName() + " Sent asynchronously '" + message + "', routingKey: " + routingKey + ", date : " + LocalDateTime.now());
-		System.out.println("Stop sending synchronously ");
-	}
 }

@@ -18,6 +18,9 @@ public class RabbitConfig {
 		this.amqpAdmin = amqpAdmin;
 	}
 
+	/**
+	 * Création des exchanges et des queues if not present
+	 */
 	@PostConstruct
 	public void afterInit() {
 		amqpAdmin.declareExchange(getDirectExchange());
@@ -25,6 +28,11 @@ public class RabbitConfig {
 		amqpAdmin.declareQueue(getQueueAsynchronous());
 	}
 
+	/**
+	 * Récupération du direct exchange rabbit.example.direct
+	 *
+	 * @return le direct exchange rabbit.example.direct
+	 */
 	@Bean
 	public DirectExchange getDirectExchange() {
 		return new DirectExchange("rabbit.example.direct");
